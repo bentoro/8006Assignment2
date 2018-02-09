@@ -3,8 +3,10 @@ IP = /sbin/iptables
 FWNAME
 FWLOCATION
 INTERNALNET
-FWIP="192.168.10.2"
-
+FWNIP="192.168.0.22" #IP address of firewall on the network
+FWIP="192.168.10.1" #IP address of the firewall within the new network
+WORKSTATION="192.168.10.2"  #IP address of workstation using the firewall
+INTERFACE="enp3s2" 
 
 TCP_DROP=($FWIP 23 32768:32775 137:139 111 515)
 UDP_DROP=(32768:32775 137:139 111 515)
@@ -28,9 +30,28 @@ SetDefaults(){
 }
 
 SetFilters(){
+    #drop all incoming/outgoing packets for the firewall
+    $IP -A INPUT ALL DROP 
+    $IP -A OUTPUT ALL DROP 
+
 	#accept fragments
 	$IP -A FORWARD -f -j ACCEPT
 	#allow stateful add to all for loops
+
+    #prerouting
+    for i in "${ALLOW[@]}"
+    do 
+        :
+        $IP -t nat -A PREROUTING -i $INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
+    done
+
+    #postrounting
+    for i in "${ALLOW[@]}"
+    do
+        :
+        $IP -t nat -A POSTROUTING -o $INTERFACE -j SNAT --to-source $FWNIP
+    done
+
 
 	#set minimum delay and ftp data to maximum throughput
 	$IP -A PREROUTING -t mangle -p tcp --sport ssh -j TOS --set-tos Minimize-Delay
