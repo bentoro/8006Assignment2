@@ -40,7 +40,7 @@ SetFilters(){
 
     #prerouting
     for i in "${TCP_ALLOW[@]}"
-    do 
+    do
         :
         $IP -t nat -A PREROUTING -p tcp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
 
@@ -146,7 +146,10 @@ Setup(){
         SetFilters
 }
     if [ "$#" -ne 1 ]; then
-        echo "Options workstation/firewall"
+        printf "Options: \n
+				workstation - Setup the workstation \n
+				firewall    - The standalone firewall \n
+				setup 			- Setup the standalone firewall\ n"
         exit 1
     fi
     case $1 in
