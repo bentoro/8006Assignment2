@@ -53,6 +53,12 @@ SetFilters(){
 #        $IP -t nat -A PREROUTING -p udp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
 #    done
 
+#prerouting
+#    for i in "${ICMP_ALLOW[@]}"
+#    do
+#        :
+#        $IP -t nat -A PREROUTING -p icmp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
+#    done
 
     #iptables -t nat -A POSTROUTING -i $INTERFACE -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-sourc $FWNIP
     #iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -o $INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
@@ -146,10 +152,7 @@ Setup(){
         SetFilters
 }
     if [ "$#" -ne 1 ]; then
-        printf "Options: \n
-				workstation - Setup the workstation \n
-				firewall    - The standalone firewall \n
-				setup 			- Setup the standalone firewall\ n"
+        echo "Options workstation/firewall"
         exit 1
     fi
     case $1 in
