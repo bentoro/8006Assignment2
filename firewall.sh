@@ -156,7 +156,7 @@ Setup(){
         exit 1
     fi
     case $1 in
-        "workstation") workstation ;;
+        "workstation") Workstation ;;
         "firewall") Firewall ;;
         "setup") Setup ;;
     esac
