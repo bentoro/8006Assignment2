@@ -1,3 +1,23 @@
+#------------------------------------------------------------------------------
+# SOURCE FILE: 		firewall.sh
+#
+# PROGRAM:  		COMP8006 - Assignment 2
+#
+#			function Cleanup()
+#			function SetDefaults()
+#			function SetPolicies()
+#			function Firewall()
+#			function Setup()
+#			function Workstation()
+#
+# DATE:			Feb 15, 2018
+#
+# DESIGNER:		Benedict Lo & Aing Ragunathan
+# Programmer:		Benedict Lo & Aing Ragunathan
+#
+# NOTES:		This script configures a netfilter firewall
+#
+#------------------------------------------------------------------------------
 IP="/sbin/iptables"
 
 #FWNAME
@@ -19,18 +39,63 @@ TCP_ALLOW=(22 80 443)
 UDP_ALLOW=(22 53 67 68)
 #ICMP_ALLOW
 
-
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		Cleanup()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method removes existing firewall rules and chains
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 Cleanup(){
 	$IP -F
 	$IP -X
 }
-
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		SetDefaults()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method sets default policies
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 SetDefaults(){
 	$IP -P INPUT DROP
 	$IP -P OUTPUT DROP
 	$IP -P FORWARD DROP
 }
-
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		SetFilters()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method sets the filters for the firewall
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 SetFilters(){
 	#accept fragments
 	$IP -A FORWARD -f -j ACCEPT
@@ -39,12 +104,14 @@ SetFilters(){
     #$IP -A FORWARD -p all -d $BLOCK_IP -j DROP
 
     #prerouting
-    for i in "${TCP_ALLOW[@]}"
+    ' :for i in "${TCP_ALLOW[@]}"
     do
         :
         $IP -t nat -A PREROUTING -p tcp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
 
-    done
+    done'
+		iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
+		iptables -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-source $WORKSTATION
 
     #prerouting
 #    for i in "${UDP_ALLOW[@]}"
@@ -64,7 +131,7 @@ SetFilters(){
     #iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -o $INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
 
     #postrounting
-    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -j SNAT --to-source $FWNIP
+  #  $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -j SNAT --to-source $FWNIP
 
 	#set minimum delay and ftp data to maximum throughput
 	$IP -A PREROUTING -t mangle -p tcp --sport ssh -j TOS --set-tos Minimize-Delay
@@ -132,6 +199,22 @@ SetFilters(){
         $IP -A FORWARD -p icmp -m icmp --dport $i -j ACCEPT
     done
 }
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		Firewall()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method configures the firewall
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 Firewall(){
 
         #Setup standalone firewall with ifconfig
@@ -140,12 +223,44 @@ Firewall(){
         route add -net 192.168.0.0 netmask 255.255.255.0 gw $FWNIP
         route add -net 192.168.10.0/24 gw 192.168.10.1
 }
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		Firewall()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method configures the workstation
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 Workstation(){
         #firewall
         ifconfig $EXTERNAL_INTERFACE down
         ifconfig $INTERFACE 192.168.10.2 up
         route add default gw 192.168.10.1
 }
+#---------------------------------------------------------------------------
+	#
+	#    FUNCTION:		Firewall()
+	#
+  #    DATE:			Feb 15, 2018
+  #
+  #    DESIGNER:		Benedict Lo & Aing Ragunathan
+  #    Programmer:		Benedict Lo & Aing Ragunathan
+  #
+	#    DESCRIPTION:	This method configures the firewall for policies
+	#
+	#
+	#    RETURNS:
+	#                	void
+	#
+	#---------------------------------------------------------------------------
 Setup(){
         Cleanup
         SetDefaults
