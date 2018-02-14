@@ -1,3 +1,9 @@
+#User configuration section
+
+tcp_allow=(22)
+tcp_deny=(32768 32771 32775 137 138 139 111 515 23)
+
+
 #---------------------------------------------------------------------------
 	#
 	#    FUNCTION:		External()
@@ -18,7 +24,19 @@ External(){
 	#remove old logs
 	rm ./output
 	printf "External test allowing TCP ports\n"
-	for i in "${tcp[@]}"
+	for i in "${tcp_allow[@]}"
+	do
+		:
+		hping3 $1 -S -p $i -c 1 >> output
+		if [  $? -eq 0 ]; then
+		    echo "Port $i on $1 is open and passed the test"
+		else
+		    echo "Port $i on $1 is closed and failed the test"
+		fi
+	done
+
+	printf "External test denying TCP ports\n"
+	for i in "${tcp_deny[@]}"
 	do
 		:
 		hping3 $1 -S -p $i -c 1 >> output
@@ -128,6 +146,6 @@ if [ "$#" -ne 2 ]; then
 		exit 1
 fi
 case $1 in
-		"external") External ;;
-		"internal") Internal ;;
+		"external") External $2;;
+		"internal") Internal $2;;
 esac
