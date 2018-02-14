@@ -37,7 +37,7 @@ BLOCK_IP=(192.168.0.0/24)
 ALLOW=(80 22 53 67 68)
 TCP_ALLOW=(22 80 443)
 UDP_ALLOW=(22 53 67 68)
-#ICMP_ALLOW
+ICMP_ALLOW=(8)
 
 #---------------------------------------------------------------------------
 	#
@@ -271,7 +271,7 @@ Setup(){
         exit 1
     fi
     case $1 in
-        "workstation") workstation ;;
+        "workstation") Workstation ;;
         "firewall") Firewall ;;
         "setup") Setup ;;
     esac
