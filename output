@@ -1,2 +1,22 @@
 HPING 127.0.0.1 (lo 127.0.0.1): S set, 40 headers + 0 data bytes
 len=40 ip=127.0.0.1 ttl=64 DF id=21812 sport=80 flags=RA seq=0 win=0 rtt=1.8 ms
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.
+hping2: missing host argument
+Try `hping2 --help' for more information.

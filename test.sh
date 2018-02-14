@@ -109,7 +109,7 @@ External(){
 	#
 	#---------------------------------------------------------------------------
 Internal(){
-	testport=(22,80,443)
+	testport=(22 80 443)
 	printf "Internal test testing TCP packets\n"
 	for i in "${testport[@]}"
 	do
@@ -126,7 +126,6 @@ Internal(){
 if [ "$#" -ne 2 ]; then
 		echo "./test internal/external [IP]"
 		exit 1
-fi
 fi
 case $1 in
 		"external") External ;;
