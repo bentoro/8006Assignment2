@@ -1,10 +1,15 @@
-ip="192.168.0.11"
-tcp_allow=(22)
+ip="192.168.0.3"
+tcp_allow=(22 80 443)
 tcp_deny=(32768 32771 32775 137 138 139 111 515 23)
-icmp_deny=(0 8)
+udp_allow=(53 67 68)
+udp_deny=(32768 32771 32775 137 138 139 111 515 23)
+icmp_allow=(0 8)
+icmp_deny=(200)
 
 #remove old logs
 rm ./output
+
+printf "\n\n\nTesting TCP ALLOW\n"
 
 for i in "${tcp_allow[@]}"
 do
@@ -17,7 +22,7 @@ do
 	fi
 done
 
-
+printf "\n\n\nTesting TCP DENY\n"
 
 for i in "${tcp_deny[@]}"
 do
@@ -30,6 +35,60 @@ do
 	fi
 done
 
+printf "\n\n\nTesting UDP ALLOW\n"
+
+for i in "${udp_allow[@]}"
+do
+	:
+	hping3 $ip -S -p $i -2 -c 1 >> output
+	if [  $? -eq 0 ]; then
+		echo "Port $i on $ip is open udp passed the test"
+else
+		echo "Port $i on $ip is closed and failed the test"
+	fi
+done
+
+printf "\n\n\nTesting UDP DENY\n"
+
+for i in "${udp_deny[@]}"
+do
+	:
+	hping3 $ip -S -p $i -2 -c 1 >> output
+	if [  $? -eq 0 ]; then
+		echo "Port $i on $ip is open and failed the test"
+else
+		echo "Port $i on $ip is closed and passsed the test"
+	fi
+done
+
+
+printf "\n\n\nTesting SYN/FIN\n"
+dport=(80)
+for i in "${dport[@]}"
+do
+	:
+	hping3 $ip -SF -p $i -c 1 >> output
+	if [  $? -eq 0 ]; then
+		echo "Port $i on $ip is open and allowed the SYN FIN packet and failed the test"
+else
+		echo "Port $i on $ip is closed and blocked the SYN FIN packet and passed the test"
+	fi
+done
+
+
+
+printf "\n\n\nTesting HIGH PORT\n"
+phigh_port=50000
+	hping3 $ip -S -p $phigh_port -c 1 >> output
+	if [  $? -eq 0 ]; then
+		echo "Port $phigh_port on $ip is open and allowed the SYN packet and failed the test"
+else
+		echo "Port $phigh_port on $ip is closed and blocked the SYN packet and passed the test"
+	fi
+
+
+
+printf "\n\n\nTesting ICMP ALLOW\n"
 
 for i in "${icmp_allow[@]}"
 do
@@ -42,63 +101,31 @@ else
 	fi
 done
 
-udp=(67)
+printf "\n\n\nTesting ICMP DENY\n"
 
-for i in "${udp[@]}"
+for i in "${icmp_deny[@]}"
 do
 	:
-	hping3 $ip -S -p $i -2 -c 1 >> output
+	hping3 $ip -S -p $i -1 -c 1 >> output
 	if [  $? -eq 0 ]; then
-		echo "Port $i on $ip is open and blocked the udp packet and failed the test"
+		echo "Port $i on $ip is open and FAILED the test"
 else
-		echo "Port $i on $ip is failed and allowed the udp packet and passed the test"
+		echo "Port $i on $ip is closed and PASSED the test"
 	fi
 done
 
-dport=(80)
 
-for i in "${dport[@]}"
-do
-	:
-	hping3 $ip -SF -p $i -c 1 >> output
-	if [  $? -eq 0 ]; then
-		echo "Port $i on $ip is open and allowed the SYN FIN packet and failed the test"
-else
-		echo "Port $i on $ip is closed and blocked the SYN FIN packet and passed the test"
-	fi
-done
-
-phigh_port=50000
-	hping3 $ip -S -p $phigh_port -c 1 >> output
-	if [  $? -eq 0 ]; then
-		echo "Port $phigh_port on $ip is open and allowed the SYN packet and failed the test"
-else
-		echo "Port $phigh_port on $ip is closed and blocked the SYN packet and passed the test"
-	fi
 
 #fragment flags - set more fragment
+printf "\n\n\nTesting FRAGMENTS\n"
 pfragment=22
 	hping3 $ip -S -p $pfragment -c 1 -f >> output
 	if [  $? -eq 0 ]; then
-		echo "Port $pfragment on $ip is closed and blocked the fragment packet and passed the test"
+		echo "Port $pfragment on $ip is open and passed the test"
 else
-		echo "Port $pfragment on $ip is open and allowed the fragment packet and failed the test"
+		echo "Port $pfragment on $ip is closed and failed the test"
 	fi
 
-#Don't fragment flags
-  hping3 $ip -S -p $pfragment -c 1 -y >> output
-	if [  $? -eq 0 ]; then
-		echo "Port $pfragment on $ip is closed and blocked the fragment packet and passed the test"
-else
-		echo "Port $pfragment on $ip is open and allowed the fragment packet and failed the test"
-	fi
-
-
-if [ "hping3 -p 22 -2 -c 3 $IP 2>/dev/null | grep -o -i ICMP | wc -l" == "3" ]; then
-    echo "true?"
-else
-    echo "false?"
-fi
 
 
 

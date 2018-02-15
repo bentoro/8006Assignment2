@@ -15,7 +15,7 @@ ICMP_DROP=(0) #=(32768:32775 137:139 111 515)
 
 BLOCK_IP=(192.168.1.0/24)
 TCP_ALLOW=(22 80 443)
-UDP_ALLOW=(22 53 67 68)
+UDP_ALLOW=(22 53 67 68 0)
 ICMP_ALLOW=(0 8)
 
 
@@ -45,15 +45,11 @@ SetFilters(){
 #
 #    done
 
-#    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-source $FWNIP
-    $IP -t nat -A POSTROUTING -j SNAT -s 192.168.10.0/24 -o $EXTERNAL_INTERFACE --to-source $FWNIP
+    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-source $FWNIP
+#    $IP -t nat -A POSTROUTING -j SNAT -s 192.168.10.0/24 -o $EXTERNAL_INTERFACE --to-source $FWNIP
 
-#    $IP -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
-    $IP -t nat -A PREROUTING -j DNAT -i $EXTERNAL_INTERFACE --to-destination $WORKSTATION
-
-
-    #postrounting
-#    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -j SNAT --to-source $FWNIP
+    $IP -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
+#    $IP -t nat -A PREROUTING -j DNAT -i $EXTERNAL_INTERFACE --to-destination $WORKSTATION
 
 	#set minimum delay and ftp data to maximum throughput
 	$IP -A PREROUTING -t mangle -p tcp --sport ssh -j TOS --set-tos Minimize-Delay
@@ -62,9 +58,6 @@ SetFilters(){
 	$IP -A PREROUTING -t mangle -p tcp --dport ftp -j TOS --set-tos Minimize-Delay
 	$IP -A PREROUTING -t mangle -p tcp --sport ftp-data -j TOS --set-tos Maximize-Throughput
 	$IP -A PREROUTING -t mangle -p tcp --dport ftp-data -j TOS --set-tos Maximize-Throughput
-#	$IP -A OUTPUT -t mangle -p tcp --sport ssh -j TOS --set-tos Minimize-Delay
-#	$IP -A OUTPUT -t mangle -p tcp --sport ftp -j TOS --set-tos Minimize-Delay
-#	$IP -A OUTPUT -t mangle -p tcp --sport ftp-data -j TOS --set-tos Maximize-Throughput
 
     #block all incoming syns
     $IP -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
@@ -94,29 +87,29 @@ SetFilters(){
    for i in "${TCP_ALLOW[@]}"
     do
         :
-#        $IP -A FORWARD -p tcp -m tcp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-#        $IP -A FORWARD -p tcp -m tcp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
+        $IP -A FORWARD -p tcp -m tcp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
+        $IP -A FORWARD -p tcp -m tcp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
 
-        $IP -A FORWARD -p tcp -m tcp --sport $i -j ACCEPT
-        $IP -A FORWARD -p tcp -m tcp --dport $i -j ACCEPT
+#        $IP -A FORWARD -p tcp -m tcp --sport $i -j ACCEPT
+#        $IP -A FORWARD -p tcp -m tcp --dport $i -j ACCEPT
         #create a state for established connections
-        $IP -A FORWARD -o $INTERFACE -p tcp --sport $i -m conntrack --ctstate \
-            NEW,ESTABLISHED -j ACCEPT
-        $IP -A FORWARD -o $INTERFACE -p tcp --dport $i -m conntrack --ctstate \
-            NEW,ESTABLISHED -j ACCEPT
+#        $IP -A FORWARD -o $INTERFACE -p tcp --sport $i -m conntrack --ctstate \
+#            NEW,ESTABLISHED -j ACCEPT
+#        $IP -A FORWARD -o $INTERFACE -p tcp --dport $i -m conntrack --ctstate \
+#            NEW,ESTABLISHED -j ACCEPT
     done
 
    for i in "${UDP_ALLOW[@]}"
     do
         :
-#        $IP -A FORWARD -p udp -m udp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-#        $IP -A FORWARD -p udp -m udp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-        $IP -A FORWARD -p udp -m udp --sport $i -j ACCEPT
-        $IP -A FORWARD -p udp -m udp --dport $i -j ACCEPT
-        $IP -A FORWARD -o $INTERFACE -p tcp --sport $i -m conntrack --ctstate \
-            NEW,ESTABLISHED -j ACCEPT
-        $IP -A FORWARD -o $INTERFACE -p udp --dport $i -m conntrack --ctstate \
-            NEW,ESTABLISHED -j ACCEPT
+        $IP -A FORWARD -p udp -m udp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
+        $IP -A FORWARD -p udp -m udp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
+#        $IP -A FORWARD -p udp -m udp --sport $i -j ACCEPT
+#        $IP -A FORWARD -p udp -m udp --dport $i -j ACCEPT
+#        $IP -A FORWARD -o $INTERFACE -p udp --sport $i -m conntrack --ctstate \
+#            NEW,ESTABLISHED -j ACCEPT
+#        $IP -A FORWARD -o $INTERFACE -p udp --dport $i -m conntrack --ctstate \
+#            NEW,ESTABLISHED -j ACCEPT
     done
 
    for i in "${ICMP_ALLOW[@]}"
