@@ -1,8 +1,5 @@
 IP="/sbin/iptables"
 
-#FWNAME
-#FWLOCATION
-#INTERNALNET
 FWNIP="192.168.0.1" #IP address of firewall on the network
 FWIP="192.168.10.1" #IP address of the firewall within the new network
 WORKSTATION="192.168.10.2"  #IP address of workstation using the firewall
@@ -11,11 +8,11 @@ EXTERNAL_INTERFACE="eno1"
 
 TCP_DROP=(23 32768:32775 137:139 111 515)
 UDP_DROP=(32768:32775 137:139 111 515 23)
-ICMP_DROP=(200)
+ICMP_DROP #=(200)
 
 BLOCK_IP=(192.168.1.0/24)
-TCP_ALLOW=(22 80 443)
-UDP_ALLOW=(22 53 67 68)
+TCP_ALLOW #=(22 80 443)
+UDP_ALLOW #=(22 53 67 68)
 ICMP_ALLOW=()
 
 
@@ -135,7 +132,7 @@ Setup(){
         exit 1
     fi
     case $1 in
-        "workstation") workstation ;;
+        "workstation") Workstation ;;
         "firewall") Firewall ;;
         "setup") Setup ;;
     esac
