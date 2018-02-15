@@ -11,13 +11,13 @@ EXTERNAL_INTERFACE="eno1"
 
 TCP_DROP=(23 32768:32775 137:139 111 515)
 UDP_DROP=(32768:32775 137:139 111 515)
-ICMP_DROP=(0) #=(32768:32775 137:139 111 515)
+ICMP_DROP=() #=(32768:32775 137:139 111 515)
 
-BLOCK_IP=(192.168.1.0/24)
+BLOCK_IP=(192.168.0.0/24)
 ALLOW=(80 22 53 67 68)
 TCP_ALLOW=(22 80 443)
 UDP_ALLOW=(22 53 67 68)
-ICMP_ALLOW=(0 8)
+#ICMP_ALLOW
 
 
 Cleanup(){
@@ -36,19 +36,16 @@ SetFilters(){
 	$IP -A FORWARD -f -j ACCEPT
 	#allow stateful add to all for loops
     #dont understand properly
-    $IP -A FORWARD -p all -d $BLOCK_IP -j DROP
+    #$IP -A FORWARD -p all -d $BLOCK_IP -j DROP
 
     #prerouting
-#    for i in "${TCP_ALLOW[@]}"
-#    do
-#        :
-#        $IP -t nat -A PREROUTING -p tcp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
-#
-#    done
+    for i in "${TCP_ALLOW[@]}"
+    do 
+        :
+        $IP -t nat -A PREROUTING -p tcp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
 
-    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-source $WORKSTATION
+    done
 
-    $IP -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
     #prerouting
 #    for i in "${UDP_ALLOW[@]}"
 #    do
@@ -56,18 +53,12 @@ SetFilters(){
 #        $IP -t nat -A PREROUTING -p udp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
 #    done
 
-#prerouting
-#    for i in "${ICMP_ALLOW[@]}"
-#    do
-#        :
-#        $IP -t nat -A PREROUTING -p icmp -i $EXTERNAL_INTERFACE --destination-port $i -j DNAT --to-destination $WORKSTATION:$i
-#    done
 
     #iptables -t nat -A POSTROUTING -i $INTERFACE -o $EXTERNAL_INTERFACE -m state --state NEW,ESTABLISHED -j SNAT --to-sourc $FWNIP
     #iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE -o $INTERFACE -m state --state NEW,ESTABLISHED -j DNAT --to-destination $WORKSTATION
 
     #postrounting
-#    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -j SNAT --to-source $FWNIP
+    $IP -t nat -A POSTROUTING -o $EXTERNAL_INTERFACE -j SNAT --to-source $FWNIP
 
 	#set minimum delay and ftp data to maximum throughput
 	$IP -A PREROUTING -t mangle -p tcp --sport ssh -j TOS --set-tos Minimize-Delay
@@ -101,7 +92,8 @@ SetFilters(){
    for i in "${ICMP_DROP[@]}"
     do
         :
-        $IP -A FORWARD -p icmp -m icmp --icmp-type $i -j DROP
+        $IP -A FORWARD -p icmp -m icmp --sport $i -j DROP
+        $IP -A FORWARD -p icmp -m icmp --dport $i -j DROP
     done
 
    for i in "${TCP_ALLOW[@]}"
@@ -130,7 +122,8 @@ SetFilters(){
    for i in "${ICMP_ALLOW[@]}"
     do
         :
-        $IP -A FORWARD -p icmp -m icmp --icmp-type $i -j ACCEPT
+        $IP -A FORWARD -p icmp -m icmp --sport $i -j ACCEPT
+        $IP -A FORWARD -p icmp -m icmp --dport $i -j ACCEPT
     done
 }
 Firewall(){
