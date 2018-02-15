@@ -3,20 +3,20 @@ IP="/sbin/iptables"
 #FWNAME
 #FWLOCATION
 #INTERNALNET
-FWNIP="192.168.0.4" #IP address of firewall on the network
+FWNIP="192.168.0.1" #IP address of firewall on the network
 FWIP="192.168.10.1" #IP address of the firewall within the new network
 WORKSTATION="192.168.10.2"  #IP address of workstation using the firewall
 INTERFACE="enp3s2"
 EXTERNAL_INTERFACE="eno1"
 
 TCP_DROP=(23 32768:32775 137:139 111 515)
-UDP_DROP=(32768:32775 137:139 111 515)
-ICMP_DROP=(0) #=(32768:32775 137:139 111 515)
+UDP_DROP=(32768:32775 137:139 111 515 23)
+ICMP_DROP=(200)
 
 BLOCK_IP=(192.168.1.0/24)
 TCP_ALLOW=(22 80 443)
-UDP_ALLOW=(22 53 67 68 0)
-ICMP_ALLOW=(0 8)
+UDP_ALLOW=(22 53 67 68)
+ICMP_ALLOW=()
 
 
 Cleanup(){
@@ -83,13 +83,12 @@ SetFilters(){
         :
         $IP -A FORWARD -p icmp -m icmp --icmp-type $i -j DROP
     done
-
+    $IP -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
    for i in "${TCP_ALLOW[@]}"
     do
         :
         $IP -A FORWARD -p tcp -m tcp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
         $IP -A FORWARD -p tcp -m tcp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-
 #        $IP -A FORWARD -p tcp -m tcp --sport $i -j ACCEPT
 #        $IP -A FORWARD -p tcp -m tcp --dport $i -j ACCEPT
         #create a state for established connections
@@ -101,15 +100,9 @@ SetFilters(){
 
    for i in "${UDP_ALLOW[@]}"
     do
-        :
-        $IP -A FORWARD -p udp -m udp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-        $IP -A FORWARD -p udp -m udp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
-#        $IP -A FORWARD -p udp -m udp --sport $i -j ACCEPT
-#        $IP -A FORWARD -p udp -m udp --dport $i -j ACCEPT
-#        $IP -A FORWARD -o $INTERFACE -p udp --sport $i -m conntrack --ctstate \
-#            NEW,ESTABLISHED -j ACCEPT
-#        $IP -A FORWARD -o $INTERFACE -p udp --dport $i -m conntrack --ctstate \
-#            NEW,ESTABLISHED -j ACCEPT
+       :
+        $IP -A FORWARD -m udp -p udp --dport $i -m state --state NEW,ESTABLISHED -j ACCEPT
+        $IP -A FORWARD -m udp -p udp --sport $i -m state --state NEW,ESTABLISHED -j ACCEPT
     done
 
    for i in "${ICMP_ALLOW[@]}"
